@@ -1173,176 +1173,177 @@ const ImpactStep: React.FC<{
             </button>
           </div>
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
-    if (projectStep === 'working') {
-      return (
-        <div className="text-center">
-          <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Clock className="w-10 h-10 text-white" />
-          </div>
-          <h2 className="text-3xl font-bold text-white mb-4">Working on Project</h2>
-          <p className="text-gray-300 mb-8">
-            Karthik is containerizing the Chennai Education Foundation's learning platform...
-          </p>
-          
-          <div className="bg-gray-800/50 rounded-xl p-6 mb-8">
-            <div className="mb-6">
-              <div className="flex justify-between text-sm text-gray-400 mb-2">
-                <span>Project Progress</span>
-                <span>{workProgress}% Complete</span>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-3">
-                <div 
-                  className="bg-gradient-to-r from-blue-600 to-blue-500 h-3 rounded-full transition-all duration-500"
-                  style={{ width: `${workProgress}%` }}
-                ></div>
-              </div>
+  if (projectStep === 'working') {
+    return (
+      <div className="text-center">
+        <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Clock className="w-10 h-10 text-white" />
+        </div>
+        <h2 className="text-3xl font-bold text-white mb-4">Working on Project</h2>
+        <p className="text-gray-300 mb-8">
+          Karthik is containerizing the Chennai Education Foundation's learning platform...
+        </p>
+        
+        <div className="bg-gray-800/50 rounded-xl p-6 mb-8">
+          <div className="mb-6">
+            <div className="flex justify-between text-sm text-gray-400 mb-2">
+              <span>Project Progress</span>
+              <span>{workProgress}% Complete</span>
             </div>
-            
+            <div className="w-full bg-gray-700 rounded-full h-3">
+              <div 
+                className="bg-gradient-to-r from-blue-600 to-blue-500 h-3 rounded-full transition-all duration-500"
+                style={{ width: `${workProgress}%` }}
+              ></div>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3">
+              <CheckCircle className="w-5 h-5 text-green-400" />
+              <span className="text-gray-300">Created Dockerfile for Node.js app</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <CheckCircle className="w-5 h-5 text-green-400" />
+              <span className="text-gray-300">Set up Docker Compose configuration</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              {workProgress >= 70 ? (
+                <CheckCircle className="w-5 h-5 text-green-400" />
+              ) : (
+                <Clock className="w-5 h-5 text-amber-400" />
+              )}
+              <span className="text-gray-300">Implementing health checks</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              {workProgress >= 100 ? (
+                <CheckCircle className="w-5 h-5 text-green-400" />
+              ) : (
+                <Clock className="w-5 h-5 text-gray-400" />
+              )}
+              <span className="text-gray-300">Documentation and testing</span>
+            </div>
+          </div>
+        </div>
+        
+        {workProgress >= 100 && (
+          <div className="text-green-400 font-semibold">
+            Project completed! Ready for submission...
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (projectStep === 'submission') {
+    return (
+      <div className="text-center">
+        <div className="w-20 h-20 bg-gradient-to-r from-green-600 to-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Award className="w-10 h-10 text-white" />
+        </div>
+        <h2 className="text-3xl font-bold text-white mb-4">Project Submission</h2>
+        <p className="text-gray-300 mb-8">
+          Excellent work! Your Docker containerization solution is ready for review.
+        </p>
+        
+        <div className="bg-gray-800/50 rounded-xl p-6 mb-8">
+          <h3 className="text-xl font-semibold text-white mb-4">Deliverables Completed</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <CheckCircle className="w-5 h-5 text-green-400" />
-                <span className="text-gray-300">Created Dockerfile for Node.js app</span>
+                <span className="text-gray-300 text-sm">Dockerfile optimized for production</span>
               </div>
               <div className="flex items-center space-x-3">
                 <CheckCircle className="w-5 h-5 text-green-400" />
-                <span className="text-gray-300">Set up Docker Compose configuration</span>
+                <span className="text-gray-300 text-sm">Docker Compose with database</span>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="w-5 h-5 text-green-400" />
+                <span className="text-gray-300 text-sm">Health checks implemented</span>
               </div>
               <div className="flex items-center space-x-3">
-                {workProgress >= 70 ? (
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                ) : (
-                  <Clock className="w-5 h-5 text-amber-400" />
-                )}
-                <span className="text-gray-300">Implementing health checks</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                {workProgress >= 100 ? (
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                ) : (
-                  <Clock className="w-5 h-5 text-gray-400" />
-                )}
-                <span className="text-gray-300">Documentation and testing</span>
+                <CheckCircle className="w-5 h-5 text-green-400" />
+                <span className="text-gray-300 text-sm">Complete deployment guide</span>
               </div>
             </div>
           </div>
-          
-          {workProgress >= 100 && (
+        </div>
+        
+        <button
+          onClick={submitProject}
+          className="px-8 py-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold rounded-xl shadow-2xl shadow-green-600/25 hover:shadow-green-500/40 transition-all duration-300 transform hover:scale-105"
+        >
+          Submit for Validation
+        </button>
+      </div>
+    );
+  }
+
+  if (projectStep === 'validation') {
+    return (
+      <div className="text-center">
+        <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Star className="w-10 h-10 text-white" />
+        </div>
+        <h2 className="text-3xl font-bold text-white mb-4">Validation in Progress</h2>
+        <p className="text-gray-300 mb-8">
+          Your project is being reviewed by technical experts and the NGO team...
+        </p>
+        
+        <div className="bg-gray-800/50 rounded-xl p-6 mb-8">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">Technical Review</span>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-5 h-5 text-green-400" />
+                <span className="text-green-400 text-sm">Approved</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">NGO Impact Verification</span>
+              <div className="flex items-center space-x-2">
+                <div className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-amber-400 text-sm">In Progress</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">Impact Badge Generation</span>
+              <div className="flex items-center space-x-2">
+                <Clock className="w-5 h-5 text-gray-400" />
+                <span className="text-gray-400 text-sm">Pending</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {userProfile.impactBadge && (
+          <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/30 rounded-xl p-6">
+            <div className="flex items-center justify-center mb-4">
+              <Award className="w-12 h-12 text-purple-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2">Impact Badge Earned!</h3>
+            <p className="text-purple-400 font-semibold mb-2">{userProfile.impactBadge.title}</p>
+            <p className="text-gray-300 text-sm mb-4">
+              Verified by {userProfile.impactBadge.organization} • {userProfile.impactBadge.date}
+            </p>
             <div className="text-green-400 font-semibold">
-              Project completed! Ready for submission...
+              Badge added to your portfolio and marketplace profile!
             </div>
-          )}
-        </div>
-      );
-    }
+          </div>
+        )}
+      </div>
+    );
+  }
 
-    if (projectStep === 'submission') {
-      return (
-        <div className="text-center">
-          <div className="w-20 h-20 bg-gradient-to-r from-green-600 to-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Award className="w-10 h-10 text-white" />
-          </div>
-          <h2 className="text-3xl font-bold text-white mb-4">Project Submission</h2>
-          <p className="text-gray-300 mb-8">
-            Excellent work! Your Docker containerization solution is ready for review.
-          </p>
-          
-          <div className="bg-gray-800/50 rounded-xl p-6 mb-8">
-            <h3 className="text-xl font-semibold text-white mb-4">Deliverables Completed</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                  <span className="text-gray-300 text-sm">Dockerfile optimized for production</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                  <span className="text-gray-300 text-sm">Docker Compose with database</span>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                  <span className="text-gray-300 text-sm">Health checks implemented</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                  <span className="text-gray-300 text-sm">Complete deployment guide</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <button
-            onClick={submitProject}
-            className="px-8 py-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold rounded-xl shadow-2xl shadow-green-600/25 hover:shadow-green-500/40 transition-all duration-300 transform hover:scale-105"
-          >
-            Submit for Validation
-          </button>
-        </div>
-      );
-    }
-
-    if (projectStep === 'validation') {
-      return (
-        <div className="text-center">
-          <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Star className="w-10 h-10 text-white" />
-          </div>
-          <h2 className="text-3xl font-bold text-white mb-4">Validation in Progress</h2>
-          <p className="text-gray-300 mb-8">
-            Your project is being reviewed by technical experts and the NGO team...
-          </p>
-          
-          <div className="bg-gray-800/50 rounded-xl p-6 mb-8">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-300">Technical Review</span>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                  <span className="text-green-400 text-sm">Approved</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-300">NGO Impact Verification</span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-amber-400 text-sm">In Progress</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-300">Impact Badge Generation</span>
-                <div className="flex items-center space-x-2">
-                  <Clock className="w-5 h-5 text-gray-400" />
-                  <span className="text-gray-400 text-sm">Pending</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {userProfile.impactBadge && (
-            <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/30 rounded-xl p-6">
-              <div className="flex items-center justify-center mb-4">
-                <Award className="w-12 h-12 text-purple-400" />
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Impact Badge Earned!</h3>
-              <p className="text-purple-400 font-semibold mb-2">{userProfile.impactBadge.title}</p>
-              <p className="text-gray-300 text-sm mb-4">
-                Verified by {userProfile.impactBadge.organization} • {userProfile.impactBadge.date}
-              </p>
-              <div className="text-green-400 font-semibold">
-                Badge added to your portfolio and marketplace profile!
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    return null;
-  };
+  return null;
+};
 
 const HiringStep: React.FC<{ userProfile: any }> = ({ userProfile }) => {
   const [searchStep, setSearchStep] = useState('searching'); // searching, found, interview
