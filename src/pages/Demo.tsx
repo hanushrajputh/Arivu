@@ -573,6 +573,17 @@ const SupportStep: React.FC<{
   setIsTyping: (typing: boolean) => void;
 }> = ({ userProfile, setUserProfile, chatMessages, setChatMessages, chatInput, setChatInput, isTyping, setIsTyping }) => {
   const [showChat, setShowChat] = useState(false);
+  const [showAssessment, setShowAssessment] = useState(false);
+  const [assessmentStep, setAssessmentStep] = useState('identity'); // identity, questions, proctoring, results
+  const [assessmentAnswers, setAssessmentAnswers] = useState<number[]>([]);
+  const [currentAssessmentQuestion, setCurrentAssessmentQuestion] = useState(0);
+  const [isProctoring, setIsProctoring] = useState(false);
+  const [proctoringChecks, setProctoringChecks] = useState({
+    faceDetected: false,
+    screenRecording: false,
+    tabSwitchDetection: false,
+    environmentScan: false
+  });
 
   const handleSendMessage = async () => {
     if (!chatInput.trim()) return;
@@ -606,16 +617,312 @@ const SupportStep: React.FC<{
   };
 
   const completeModule = () => {
-    setUserProfile({
-      ...userProfile,
-      completedModules: userProfile.completedModules + 1,
-      skills: {
-        ...userProfile.skills,
-        'Docker': 75
-      }
-    });
+    setShowAssessment(true);
+    setAssessmentStep('identity');
   };
 
+  const assessmentQuestions = [
+    {
+      question: "What is the primary purpose of Docker containers?",
+      options: [
+        "To replace virtual machines entirely",
+        "To package applications with their dependencies for consistent deployment",
+        "To provide better security than traditional applications",
+        "To increase application performance"
+      ],
+      correct: 1
+    },
+    {
+      question: "Which command is used to build a Docker image from a Dockerfile?",
+      options: [
+        "docker create",
+        "docker run",
+        "docker build",
+        "docker make"
+      ],
+      correct: 2
+    },
+    {
+      question: "What is the difference between a Docker image and a Docker container?",
+      options: [
+        "Images are running instances, containers are templates",
+        "There is no difference, they are the same thing",
+        "Images are templates, containers are running instances",
+        "Images are smaller than containers"
+      ],
+      correct: 2
+    },
+    {
+      question: "Which file is used to define the steps to build a Docker image?",
+      options: [
+        "docker-compose.yml",
+        "Dockerfile",
+        "package.json",
+        "config.docker"
+      ],
+      correct: 1
+    },
+    {
+      question: "What does the 'docker run -p 8080:80' command do?",
+      options: [
+        "Runs 8080 containers on port 80",
+        "Maps host port 8080 to container port 80",
+        "Creates 80 containers on port 8080",
+        "Sets the container memory to 8080MB"
+      ],
+      correct: 1
+    }
+  ];
+
+  const startProctoring = () => {
+    setIsProctoring(true);
+    setAssessmentStep('proctoring');
+    
+    // Simulate proctoring checks
+    const checks = ['faceDetected', 'screenRecording', 'tabSwitchDetection', 'environmentScan'];
+    checks.forEach((check, index) => {
+      setTimeout(() => {
+        setProctoringChecks(prev => ({ ...prev, [check]: true }));
+      }, (index + 1) * 1000);
+    });
+    
+    // Start assessment after all checks
+    setTimeout(() => {
+      setAssessmentStep('questions');
+      setIsProctoring(false);
+    }, 5000);
+  };
+
+  const handleAssessmentAnswer = (answerIndex: number) => {
+    const newAnswers = [...assessmentAnswers];
+    newAnswers[currentAssessmentQuestion] = answerIndex;
+    setAssessmentAnswers(newAnswers);
+
+    if (currentAssessmentQuestion < assessmentQuestions.length - 1) {
+      setCurrentAssessmentQuestion(currentAssessmentQuestion + 1);
+    } else {
+      // Calculate score
+      const score = newAnswers.reduce((total, answer, index) => {
+        return total + (answer === assessmentQuestions[index].correct ? 1 : 0);
+      }, 0);
+      
+      setAssessmentStep('results');
+      
+      // Update user profile after assessment
+      setTimeout(() => {
+        setUserProfile({
+          ...userProfile,
+          completedModules: userProfile.completedModules + 1,
+          skills: {
+            ...userProfile.skills,
+            'Docker': Math.min(95, 60 + (score * 7)) // Score affects skill level
+          }
+        });
+        setShowAssessment(false);
+        setAssessmentStep('identity');
+        setAssessmentAnswers([]);
+        setCurrentAssessmentQuestion(0);
+      }, 3000);
+    }
+  };
+
+  if (showAssessment) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        {assessmentStep === 'identity' && (
+          <div className="text-center">
+            <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Award className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold text-white mb-4">Docker Fundamentals Assessment</h2>
+            <p className="text-gray-300 mb-8">
+              Complete this proctored assessment to validate your Docker knowledge and earn your skill badge.
+            </p>
+            
+            <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/30 rounded-xl p-6 mb-8">
+              <h3 className="text-purple-400 font-semibold mb-4">Assessment Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="w-4 h-4 text-purple-400" />
+                    <span className="text-gray-300 text-sm">5 Multiple Choice Questions</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="w-4 h-4 text-purple-400" />
+                    <span className="text-gray-300 text-sm">10 Minutes Time Limit</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="w-4 h-4 text-purple-400" />
+                    <span className="text-gray-300 text-sm">Proctored Environment</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="w-4 h-4 text-purple-400" />
+                    <span className="text-gray-300 text-sm">Face Detection Required</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="w-4 h-4 text-purple-400" />
+                    <span className="text-gray-300 text-sm">Screen Recording Active</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="w-4 h-4 text-purple-400" />
+                    <span className="text-gray-300 text-sm">Tab Switch Detection</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex space-x-4 justify-center">
+              <button
+                onClick={startProctoring}
+                className="px-8 py-3 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-semibold rounded-lg transition-all duration-300"
+              >
+                Start Proctored Assessment
+              </button>
+              <button
+                onClick={() => setShowAssessment(false)}
+                className="px-6 py-3 border border-gray-600 hover:border-purple-500 text-gray-300 hover:text-purple-400 rounded-lg transition-all duration-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {assessmentStep === 'proctoring' && (
+          <div className="text-center">
+            <div className="w-20 h-20 bg-gradient-to-r from-amber-600 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Clock className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold text-white mb-4">Setting Up Proctoring</h2>
+            <p className="text-gray-300 mb-8">
+              Please wait while we initialize the proctored environment...
+            </p>
+            
+            <div className="bg-gray-800/50 rounded-xl p-6 mb-8">
+              <div className="space-y-4">
+                {Object.entries(proctoringChecks).map(([check, completed]) => (
+                  <div key={check} className="flex items-center justify-between">
+                    <span className="text-gray-300 capitalize">
+                      {check.replace(/([A-Z])/g, ' $1').trim()}
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      {completed ? (
+                        <CheckCircle className="w-5 h-5 text-green-400" />
+                      ) : (
+                        <div className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+                      )}
+                      <span className={`text-sm ${completed ? 'text-green-400' : 'text-amber-400'}`}>
+                        {completed ? 'Ready' : 'Checking...'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {Object.values(proctoringChecks).every(Boolean) && (
+              <div className="text-green-400 font-semibold">
+                All systems ready! Starting assessment...
+              </div>
+            )}
+          </div>
+        )}
+        
+        {assessmentStep === 'questions' && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white">Docker Assessment</h2>
+              <div className="flex items-center space-x-4">
+                <div className="text-red-400 font-semibold">🔴 RECORDING</div>
+                <div className="text-amber-400">⏱️ 8:45 remaining</div>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <div className="flex justify-between text-sm text-gray-400 mb-2">
+                <span>Question {currentAssessmentQuestion + 1} of {assessmentQuestions.length}</span>
+                <span>{Math.round(((currentAssessmentQuestion + 1) / assessmentQuestions.length) * 100)}% Complete</span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-2">
+                <div 
+                  className="bg-gradient-to-r from-purple-600 to-purple-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${((currentAssessmentQuestion + 1) / assessmentQuestions.length) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+
+            <div className="bg-gray-800/50 rounded-xl p-6 mb-6">
+              <h3 className="text-xl font-semibold text-white mb-6">
+                {assessmentQuestions[currentAssessmentQuestion].question}
+              </h3>
+              <div className="space-y-3">
+                {assessmentQuestions[currentAssessmentQuestion].options.map((option, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleAssessmentAnswer(index)}
+                    className="w-full p-4 text-left bg-gray-700/50 hover:bg-purple-500/20 border border-gray-600 hover:border-purple-500/50 rounded-lg text-white transition-all duration-300"
+                  >
+                    <span className="font-medium mr-3">{String.fromCharCode(65 + index)}.</span>
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+              <div className="flex items-center space-x-2 text-red-400 text-sm">
+                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+                <span>Proctoring Active - Face detected, no tab switches detected</span>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {assessmentStep === 'results' && (
+          <div className="text-center">
+            <div className="w-24 h-24 bg-gradient-to-r from-green-600 to-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Award className="w-12 h-12 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold text-white mb-4">Assessment Complete!</h2>
+            <p className="text-gray-300 mb-6">
+              Congratulations! You've successfully completed the Docker Fundamentals assessment.
+            </p>
+            
+            <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/30 rounded-xl p-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="text-2xl font-bold text-green-400 mb-1">
+                    {assessmentAnswers.reduce((total, answer, index) => {
+                      return total + (answer === assessmentQuestions[index].correct ? 1 : 0);
+                    }, 0)}/5
+                  </div>
+                  <div className="text-gray-300 text-sm">Correct Answers</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-green-400 mb-1">
+                    {Math.round((assessmentAnswers.reduce((total, answer, index) => {
+                      return total + (answer === assessmentQuestions[index].correct ? 1 : 0);
+                    }, 0) / 5) * 100)}%
+                  </div>
+                  <div className="text-gray-300 text-sm">Score</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-green-400 mb-1">PASS</div>
+                  <div className="text-gray-300 text-sm">Status</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="text-green-400 font-semibold">
+              Skill level updated! Returning to learning dashboard...
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
   return (
     <div>
       <div className="text-center mb-8">
@@ -709,7 +1016,7 @@ const SupportStep: React.FC<{
                   </div>
                 )}
               </div>
-              
+
               <div className="flex space-x-2">
                 <input
                   type="text"
@@ -717,26 +1024,16 @@ const SupportStep: React.FC<{
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder="Ask about Docker concepts..."
-                  className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-teal-500"
-                  disabled={isTyping}
+                  className="flex-1 px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-teal-500"
                 />
                 <button
                   onClick={handleSendMessage}
-                  className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[60px]"
-                  disabled={isTyping || !chatInput.trim()}
+                  disabled={!chatInput.trim() || isTyping}
+                  className="px-4 py-2 bg-teal-600 hover:bg-teal-500 disabled:bg-gray-600 text-white rounded-lg transition-all duration-300"
                 >
-                  {isTyping ? '...' : 'Send'}
+                  Send
                 </button>
               </div>
-            </div>
-          )}
-
-          {!showChat && (
-            <div className="text-center py-8">
-              <MessageSquare className="w-16 h-16 text-teal-400 mx-auto mb-4 opacity-50" />
-              <p className="text-gray-400">
-                Thozhan (தோழன்) is ready to help with your Docker questions in English, Hindi, or Tamil!
-              </p>
             </div>
           )}
         </div>
@@ -749,309 +1046,553 @@ const ImpactStep: React.FC<{
   userProfile: any;
   setUserProfile: (profile: any) => void;
 }> = ({ userProfile, setUserProfile }) => {
-  const [showProject, setShowProject] = useState(false);
-  const [projectCompleted, setProjectCompleted] = useState(false);
+  const [projectStep, setProjectStep] = useState('briefing'); // briefing, working, submission, validation
+  const [isWorking, setIsWorking] = useState(false);
+  const [workProgress, setWorkProgress] = useState(0);
 
-  const completeProject = () => {
-    setProjectCompleted(true);
-    setUserProfile({
-      ...userProfile,
-      impactBadge: {
-        project: 'Website Containerization',
-        ngo: 'Chennai Education Foundation',
-        date: new Date().toLocaleDateString()
-      }
-    });
+  const ngoProject = {
+    organization: "Chennai Education Foundation",
+    title: "Containerize Learning Management System",
+    description: "Help us containerize our web-based learning platform to improve deployment and scalability for rural schools.",
+    requirements: [
+      "Create Dockerfile for Node.js application",
+      "Set up Docker Compose for multi-service architecture",
+      "Implement health checks and logging",
+      "Document deployment process"
+    ],
+    impact: "Will help 500+ students in rural Tamil Nadu access online education",
+    timeline: "2 weeks",
+    verification: "Technical review by senior developer + NGO testimonial"
   };
 
-  useEffect(() => {
-    // Reset project state when component mounts
-    if (!userProfile.impactBadge) {
-      setShowProject(false);
-      setProjectCompleted(false);
-    }
-  }, [userProfile.impactBadge]);
-  
-  return (
-    <div>
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-white mb-4">Impact & Validation</h2>
-        <p className="text-gray-300">Time to earn your Impact Badge by helping the community!</p>
-      </div>
-
-      {!projectCompleted ? (
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/30 rounded-xl p-8 mb-8">
-            <div className="flex items-center mb-6">
-              <Award className="w-12 h-12 text-purple-400 mr-4" />
-              <div>
-                <h3 className="text-2xl font-bold text-white">Impact Badge Opportunity</h3>
-                <p className="text-purple-400">Help a local NGO with your new Docker skills</p>
-              </div>
-            </div>
-            
-            <div className="bg-gray-800/50 rounded-lg p-6 mb-6">
-              <h4 className="text-lg font-semibold text-white mb-4">Project: Website Containerization</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h5 className="font-semibold text-gray-300 mb-2">NGO Details:</h5>
-                  <ul className="text-gray-400 space-y-1">
-                    <li>• Chennai Education Foundation</li>
-                    <li>• Serves 500+ underprivileged students</li>
-                    <li>• Needs help containerizing their website</li>
-                    <li>• Currently facing deployment issues</li>
-                  </ul>
-                </div>
-                <div>
-                  <h5 className="font-semibold text-gray-300 mb-2">Your Task:</h5>
-                  <ul className="text-gray-400 space-y-1">
-                    <li>• Create Dockerfile for their Node.js app</li>
-                    <li>• Set up docker-compose for database</li>
-                    <li>• Document deployment process</li>
-                    <li>• Estimated time: 4-6 hours</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setShowProject(true)}
-                className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-semibold rounded-lg transition-all duration-300"
-              >
-                Accept Project
-              </button>
-              <button className="px-6 py-3 border border-gray-600 hover:border-purple-500 text-gray-300 hover:text-purple-400 rounded-lg transition-all duration-300">
-                Learn More
-              </button>
-            </div>
-          </div>
-
-          {showProject && (
-            <div className="bg-gray-800/50 rounded-xl p-6">
-              <h4 className="text-lg font-semibold text-white mb-4">Project Simulation</h4>
-              <div className="bg-gray-900/50 rounded-lg p-4 mb-4 font-mono text-sm text-green-400">
-                <div>$ docker build -t cef-website .</div>
-                <div>$ docker-compose up -d</div>
-                <div>✓ Website containerized successfully</div>
-                <div>✓ Database connection established</div>
-                <div>✓ Documentation created</div>
-              </div>
-              <button
-                onClick={completeProject}
-                className="w-full py-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-semibold rounded-lg transition-all duration-300"
-              >
-                Submit Completed Project
-              </button>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="text-center">
-          <div className="w-32 h-32 bg-gradient-to-r from-purple-600 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-purple-600/25">
-            <Award className="w-16 h-16 text-white" />
-          </div>
-          
-          <h3 className="text-3xl font-bold text-white mb-4">Impact Badge Earned! 🎉</h3>
-          <p className="text-gray-300 mb-6 text-lg">
-            Congratulations! You've successfully helped Chennai Education Foundation containerize their website.
-          </p>
-          
-          <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/30 rounded-xl p-6 max-w-md mx-auto">
-            <h4 className="text-purple-400 font-semibold mb-2">Impact Badge Details</h4>
-            <div className="text-left space-y-2 text-gray-300">
-              <div><strong>Project:</strong> {userProfile.impactBadge.project}</div>
-              <div><strong>Organization:</strong> {userProfile.impactBadge.ngo}</div>
-              <div><strong>Completed:</strong> {userProfile.impactBadge.date}</div>
-              <div><strong>Skills Verified:</strong> Docker, Problem Solving, Community Impact</div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const HiringStep: React.FC<{ userProfile: any }> = ({ userProfile }) => {
-  const [searchFilters, setSearchFilters] = useState({
-    skills: 'Docker',
-    experience: 'Entry Level',
-    location: 'Chennai'
-  });
-
-  const [searchResults, setSearchResults] = useState(false);
-
-  const handleSearch = () => {
-    setSearchResults(true);
+  const startProject = () => {
+    setProjectStep('working');
+    setIsWorking(true);
+    
+    // Simulate work progress
+    const interval = setInterval(() => {
+      setWorkProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setIsWorking(false);
+          setProjectStep('submission');
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 500);
   };
 
-  return (
-    <div>
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-white mb-4">Corporate Hiring View</h2>
-        <p className="text-gray-300">A recruiter from TechFlow Solutions is searching for talent</p>
-      </div>
+  const submitProject = () => {
+    setProjectStep('validation');
+    
+    // Simulate validation process
+    setTimeout(() => {
+      setUserProfile({
+        ...userProfile,
+        impactBadge: {
+          title: "Community Impact: Education Tech",
+          organization: "Chennai Education Foundation",
+          date: new Date().toLocaleDateString(),
+          verification: "Verified by Senior Developer + NGO"
+        }
+      });
+    }, 3000);
+  };
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Search Interface */}
-        <div className="lg:col-span-1">
-          <div className="bg-gray-800/50 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-white mb-6 flex items-center">
-              <Search className="w-5 h-5 mr-3 text-blue-400" />
-              Talent Search
-            </h3>
+  if (projectStep === 'briefing') {
+    return (
+      <div>
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Users className="w-10 h-10 text-white" />
+          </div>
+          <h2 className="text-3xl font-bold text-white mb-4">Real-World Impact Project</h2>
+          <p className="text-gray-300">Apply your Docker skills to help a local NGO</p>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/30 rounded-xl p-6 mb-8">
+          <div className="flex items-center mb-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg flex items-center justify-center mr-4">
+              <Users className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-white">{ngoProject.organization}</h3>
+              <p className="text-purple-400">{ngoProject.title}</p>
+            </div>
+          </div>
+          
+          <p className="text-gray-300 mb-6">{ngoProject.description}</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <h4 className="text-white font-semibold mb-3">Requirements:</h4>
+              <ul className="space-y-2">
+                {ngoProject.requirements.map((req, index) => (
+                  <li key={index} className="flex items-start space-x-2">
+                    <CheckCircle className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-300 text-sm">{req}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-300 text-sm font-medium mb-2">Required Skills</label>
-                <input
-                  type="text"
-                  value={searchFilters.skills}
-                  onChange={(e) => setSearchFilters({...searchFilters, skills: e.target.value})}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-blue-500"
-                />
+                <h4 className="text-white font-semibold mb-2">Impact:</h4>
+                <p className="text-gray-300 text-sm">{ngoProject.impact}</p>
               </div>
-              
               <div>
-                <label className="block text-gray-300 text-sm font-medium mb-2">Experience Level</label>
-                <select
-                  value={searchFilters.experience}
-                  onChange={(e) => setSearchFilters({...searchFilters, experience: e.target.value})}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-blue-500"
-                >
-                  <option>Entry Level</option>
-                  <option>Mid Level</option>
-                  <option>Senior Level</option>
-                </select>
+                <h4 className="text-white font-semibold mb-2">Timeline:</h4>
+                <p className="text-gray-300 text-sm">{ngoProject.timeline}</p>
               </div>
-              
               <div>
-                <label className="block text-gray-300 text-sm font-medium mb-2">Location</label>
-                <select
-                  value={searchFilters.location}
-                  onChange={(e) => setSearchFilters({...searchFilters, location: e.target.value})}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-blue-500"
-                >
-                  <option>Chennai</option>
-                  <option>Mumbai</option>
-                  <option>Bangalore</option>
-                  <option>Remote</option>
-                </select>
+                <h4 className="text-white font-semibold mb-2">Verification:</h4>
+                <p className="text-gray-300 text-sm">{ngoProject.verification}</p>
               </div>
-              
-              <div className="flex items-center space-x-2">
-                <input type="checkbox" id="impact" className="rounded" defaultChecked />
-                <label htmlFor="impact" className="text-gray-300 text-sm">Has Impact Badge</label>
-              </div>
-              
-              <button 
-                onClick={handleSearch}
-                className="w-full py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-lg transition-all duration-300"
-              >
-                Search Candidates
-              </button>
             </div>
           </div>
+          
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mb-6">
+            <div className="flex items-center space-x-2 text-amber-400 mb-2">
+              <Award className="w-5 h-5" />
+              <span className="font-semibold">Impact Badge Opportunity</span>
+            </div>
+            <p className="text-gray-300 text-sm">
+              Complete this project successfully to earn a verified Impact Badge that will appear in your portfolio and marketplace profile.
+            </p>
+          </div>
+          
+          <div className="text-center">
+            <button
+              onClick={startProject}
+              className="px-8 py-3 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-bold rounded-xl shadow-2xl shadow-purple-600/25 hover:shadow-purple-500/40 transition-all duration-300 transform hover:scale-105 flex items-center space-x-2 mx-auto"
+            >
+              <span>Accept Project</span>
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
+      );
+    }
 
-        {/* Search Results */}
-        <div className="lg:col-span-2">
-          <div className="bg-gray-800/50 rounded-xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-white">Search Results</h3>
-              <span className="text-gray-400 text-sm">
-                {searchResults ? '1 verified candidate found' : 'Click search to find candidates'}
-              </span>
+    if (projectStep === 'working') {
+      return (
+        <div className="text-center">
+          <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Clock className="w-10 h-10 text-white" />
+          </div>
+          <h2 className="text-3xl font-bold text-white mb-4">Working on Project</h2>
+          <p className="text-gray-300 mb-8">
+            Karthik is containerizing the Chennai Education Foundation's learning platform...
+          </p>
+          
+          <div className="bg-gray-800/50 rounded-xl p-6 mb-8">
+            <div className="mb-6">
+              <div className="flex justify-between text-sm text-gray-400 mb-2">
+                <span>Project Progress</span>
+                <span>{workProgress}% Complete</span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-3">
+                <div 
+                  className="bg-gradient-to-r from-blue-600 to-blue-500 h-3 rounded-full transition-all duration-500"
+                  style={{ width: `${workProgress}%` }}
+                ></div>
+              </div>
             </div>
             
-            {searchResults ? (
-              /* Karthik's Profile Card */
-              <div className="bg-gradient-to-br from-gray-700/50 to-gray-800/50 border border-orange-500/30 rounded-xl p-6 hover:scale-105 transition-all duration-300">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 bg-gradient-to-r from-orange-600 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
-                      K
-                    </div>
-                    <div>
-                      <h4 className="text-xl font-semibold text-white">{userProfile.name}</h4>
-                      <p className="text-gray-400">{userProfile.location}</p>
-                      <p className="text-orange-400 font-medium">{userProfile.aspiration}</p>
-                    </div>
-                  </div>
-                  
-                  {userProfile.impactBadge && (
-                    <div className="flex items-center space-x-2 bg-purple-500/20 border border-purple-500/30 rounded-lg px-3 py-1">
-                      <Award className="w-4 h-4 text-purple-400" />
-                      <span className="text-purple-400 text-sm font-medium">Impact Badge</span>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="mb-4">
-                  <h5 className="text-gray-300 font-medium mb-2">Verified Skills:</h5>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(userProfile.skills)
-                      .filter(([_, level]) => level >= 70)
-                      .map(([skill, level]) => (
-                        <span key={skill} className="px-3 py-1 bg-green-500/20 text-green-400 text-sm rounded-full border border-green-500/30">
-                          {skill} ({level}%)
-                        </span>
-                      ))}
-                  </div>
-                </div>
-                
-                {userProfile.impactBadge && (
-                  <div className="mb-4 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-                    <h5 className="text-purple-400 font-medium mb-1">Community Impact Project:</h5>
-                    <p className="text-gray-300 text-sm">
-                      Helped {userProfile.impactBadge.ngo} with {userProfile.impactBadge.project}
-                    </p>
-                  </div>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="w-5 h-5 text-green-400" />
+                <span className="text-gray-300">Created Dockerfile for Node.js app</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="w-5 h-5 text-green-400" />
+                <span className="text-gray-300">Set up Docker Compose configuration</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                {workProgress >= 70 ? (
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                ) : (
+                  <Clock className="w-5 h-5 text-amber-400" />
                 )}
-                
-                <div className="flex space-x-3">
-                  <button className="flex-1 py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-lg transition-all duration-300">
-                    View Full Portfolio
-                  </button>
-                  <button className="px-6 py-2 border border-green-500 text-green-400 hover:bg-green-500/10 font-semibold rounded-lg transition-all duration-300">
-                    Invite to Interview
-                  </button>
+                <span className="text-gray-300">Implementing health checks</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                {workProgress >= 100 ? (
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                ) : (
+                  <Clock className="w-5 h-5 text-gray-400" />
+                )}
+                <span className="text-gray-300">Documentation and testing</span>
+              </div>
+            </div>
+          </div>
+          
+          {workProgress >= 100 && (
+            <div className="text-green-400 font-semibold">
+              Project completed! Ready for submission...
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (projectStep === 'submission') {
+      return (
+        <div className="text-center">
+          <div className="w-20 h-20 bg-gradient-to-r from-green-600 to-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Award className="w-10 h-10 text-white" />
+          </div>
+          <h2 className="text-3xl font-bold text-white mb-4">Project Submission</h2>
+          <p className="text-gray-300 mb-8">
+            Excellent work! Your Docker containerization solution is ready for review.
+          </p>
+          
+          <div className="bg-gray-800/50 rounded-xl p-6 mb-8">
+            <h3 className="text-xl font-semibold text-white mb-4">Deliverables Completed</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-gray-300 text-sm">Dockerfile optimized for production</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-gray-300 text-sm">Docker Compose with database</span>
                 </div>
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <Search className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-                <p className="text-gray-400">Use the search filters to find verified candidates</p>
-              </div>
-            )}
-            
-            {searchResults && (
-              <div className="mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-                <div className="flex items-center space-x-3 mb-2">
-                  <TrendingUp className="w-5 h-5 text-green-400" />
-                  <h4 className="text-green-400 font-semibold">Hiring Metrics</h4>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-gray-300 text-sm">Health checks implemented</span>
                 </div>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-green-400">45%</div>
-                    <div className="text-gray-400 text-sm">Time-to-hire saved</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-green-400">92%</div>
-                    <div className="text-gray-400 text-sm">Skill match accuracy</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-green-400">73%</div>
-                    <div className="text-gray-400 text-sm">Diversity improvement</div>
-                  </div>
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-gray-300 text-sm">Complete deployment guide</span>
                 </div>
               </div>
-            )}
+            </div>
+          </div>
+          
+          <button
+            onClick={submitProject}
+            className="px-8 py-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold rounded-xl shadow-2xl shadow-green-600/25 hover:shadow-green-500/40 transition-all duration-300 transform hover:scale-105"
+          >
+            Submit for Validation
+          </button>
+        </div>
+      );
+    }
+
+    if (projectStep === 'validation') {
+      return (
+        <div className="text-center">
+          <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Star className="w-10 h-10 text-white" />
+          </div>
+          <h2 className="text-3xl font-bold text-white mb-4">Validation in Progress</h2>
+          <p className="text-gray-300 mb-8">
+            Your project is being reviewed by technical experts and the NGO team...
+          </p>
+          
+          <div className="bg-gray-800/50 rounded-xl p-6 mb-8">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-300">Technical Review</span>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-green-400 text-sm">Approved</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-300">NGO Impact Verification</span>
+                <div className="flex items-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-amber-400 text-sm">In Progress</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-300">Impact Badge Generation</span>
+                <div className="flex items-center space-x-2">
+                  <Clock className="w-5 h-5 text-gray-400" />
+                  <span className="text-gray-400 text-sm">Pending</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {userProfile.impactBadge && (
+            <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/30 rounded-xl p-6">
+              <div className="flex items-center justify-center mb-4">
+                <Award className="w-12 h-12 text-purple-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Impact Badge Earned!</h3>
+              <p className="text-purple-400 font-semibold mb-2">{userProfile.impactBadge.title}</p>
+              <p className="text-gray-300 text-sm mb-4">
+                Verified by {userProfile.impactBadge.organization} • {userProfile.impactBadge.date}
+              </p>
+              <div className="text-green-400 font-semibold">
+                Badge added to your portfolio and marketplace profile!
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+const HiringStep: React.FC<{ userProfile: any }> = ({ userProfile }) => {
+  const [searchStep, setSearchStep] = useState('searching'); // searching, found, interview
+  const [showProfile, setShowProfile] = useState(false);
+
+  useEffect(() => {
+    if (searchStep === 'searching') {
+      setTimeout(() => setSearchStep('found'), 2000);
+    }
+  }, [searchStep]);
+
+  const recruiterProfile = {
+    name: "Sarah Chen",
+    company: "TechFlow Solutions",
+    role: "Senior Technical Recruiter",
+    searchCriteria: "Docker + Python + Entry Level + Remote"
+  };
+
+  if (searchStep === 'searching') {
+    return (
+      <div className="text-center">
+        <div className="w-20 h-20 bg-gradient-to-r from-teal-600 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Search className="w-10 h-10 text-white" />
+        </div>
+        <h2 className="text-3xl font-bold text-white mb-4">Corporate Talent Search</h2>
+        <p className="text-gray-300 mb-8">
+          Meanwhile, recruiters are searching the Arivu marketplace for verified talent...
+        </p>
+        
+        <div className="bg-gray-800/50 rounded-xl p-6 mb-8">
+          <div className="flex items-center justify-center mb-6">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-blue-500 rounded-full flex items-center justify-center">
+              <Users className="w-8 h-8 text-white" />
+            </div>
+          </div>
+          <h3 className="text-xl font-semibold text-white mb-2">{recruiterProfile.name}</h3>
+          <p className="text-blue-400 mb-4">{recruiterProfile.role} at {recruiterProfile.company}</p>
+          
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
+            <h4 className="text-blue-400 font-semibold mb-2">Search Query:</h4>
+            <p className="text-gray-300 text-sm">{recruiterProfile.searchCriteria}</p>
+          </div>
+          
+          <div className="flex items-center justify-center space-x-2 text-teal-400">
+            <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            <span className="ml-3">Searching verified candidates...</span>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (searchStep === 'found') {
+    return (
+      <div>
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 bg-gradient-to-r from-green-600 to-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-10 h-10 text-white" />
+          </div>
+          <h2 className="text-3xl font-bold text-white mb-4">Perfect Match Found!</h2>
+          <p className="text-gray-300">
+            {recruiterProfile.name} discovered Karthik's verified profile in the marketplace
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Karthik's Profile */}
+          <div className="bg-gray-800/50 rounded-xl p-6">
+            <div className="flex items-center space-x-4 mb-6">
+              <div className="w-16 h-16 bg-gradient-to-r from-orange-600 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                K
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-white">{userProfile.name}</h3>
+                <p className="text-gray-400">{userProfile.location}</p>
+                <p className="text-orange-400 text-sm">{userProfile.aspiration}</p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <h4 className="text-white font-semibold mb-3">Verified Skills</h4>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(userProfile.skills).map(([skill, level]) => (
+                  <span
+                    key={skill}
+                    className={`px-3 py-1 text-xs font-medium rounded-full ${
+                      level >= 70 ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                      level >= 40 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                      'bg-gray-600/20 text-gray-400 border border-gray-600/30'
+                    }`}
+                  >
+                    {skill} ({level}%)
+                  </span>
+                ))}
+              </div>
+            </div>
+            
+            {userProfile.impactBadge && (
+              <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Award className="w-5 h-5 text-purple-400" />
+                  <span className="text-purple-400 font-semibold">Impact Badge</span>
+                </div>
+                <p className="text-white text-sm font-medium">{userProfile.impactBadge.title}</p>
+                <p className="text-gray-400 text-xs">
+                  {userProfile.impactBadge.organization} • {userProfile.impactBadge.verification}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Hiring Metrics */}
+          <div className="bg-gray-800/50 rounded-xl p-6">
+            <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
+              <BarChart3 className="w-6 h-6 mr-3 text-teal-400" />
+              Hiring Intelligence
+            </h3>
+            
+            <div className="space-y-6">
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-300">Skill Match Score</span>
+                  <span className="text-green-400 font-bold">92%</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2">
+                  <div className="bg-green-500 h-2 rounded-full w-11/12"></div>
+                </div>
+              </div>
+              
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-300">Project Quality</span>
+                  <span className="text-amber-400 font-bold">9.2/10</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2">
+                  <div className="bg-amber-500 h-2 rounded-full w-11/12"></div>
+                </div>
+              </div>
+              
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-300">Cultural Fit</span>
+                  <span className="text-purple-400 font-bold">High</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2">
+                  <div className="bg-purple-500 h-2 rounded-full w-5/6"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-8 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <h4 className="text-green-400 font-semibold mb-2">Hiring Prediction</h4>
+              <p className="text-gray-300 text-sm mb-2">
+                <strong>Time to Hire:</strong> 45% faster than average
+              </p>
+              <p className="text-gray-300 text-sm mb-2">
+                <strong>Success Probability:</strong> 89% based on similar profiles
+              </p>
+              <p className="text-gray-300 text-sm">
+                <strong>Diversity Impact:</strong> Contributes to DEI goals
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="text-center mt-8">
+          <button
+            onClick={() => setSearchStep('interview')}
+            className="px-8 py-3 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white font-bold rounded-xl shadow-2xl shadow-teal-600/25 hover:shadow-teal-500/40 transition-all duration-300 transform hover:scale-105"
+          >
+            Schedule Interview
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (searchStep === 'interview') {
+    return (
+      <div className="text-center">
+        <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Award className="w-10 h-10 text-white" />
+        </div>
+        <h2 className="text-3xl font-bold text-white mb-4">Success Story Complete!</h2>
+        <p className="text-gray-300 mb-8">
+          Karthik's journey from aspiration to opportunity through the Arivu platform
+        </p>
+        
+        <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/30 rounded-xl p-8 mb-8">
+          <h3 className="text-2xl font-bold text-white mb-6">Journey Summary</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-gradient-to-r from-orange-600 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Target className="w-6 h-6 text-white" />
+              </div>
+              <h4 className="text-white font-semibold mb-1">Assessment</h4>
+              <p className="text-gray-400 text-sm">Skills mapped to market demand</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 bg-gradient-to-r from-teal-600 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Clock className="w-6 h-6 text-white" />
+              </div>
+              <h4 className="text-white font-semibold mb-1">Learning</h4>
+              <p className="text-gray-400 text-sm">AI-guided skill development</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Award className="w-6 h-6 text-white" />
+              </div>
+              <h4 className="text-white font-semibold mb-1">Validation</h4>
+              <p className="text-gray-400 text-sm">Real project impact badge</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 bg-gradient-to-r from-green-600 to-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+              <h4 className="text-white font-semibold mb-1">Opportunity</h4>
+              <p className="text-gray-400 text-sm">Marketplace connection</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-teal-500/10 border border-teal-500/30 rounded-xl p-6">
+          <h4 className="text-teal-400 font-semibold mb-2">The Arivu Advantage</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-teal-400 mb-1">45%</div>
+              <div className="text-gray-300">Faster hiring process</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-teal-400 mb-1">92%</div>
+              <div className="text-gray-300">Skill match accuracy</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-teal-400 mb-1">70%</div>
+              <div className="text-gray-300">Revenue reinvested</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 };
 
 export default Demo;
