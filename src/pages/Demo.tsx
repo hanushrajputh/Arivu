@@ -35,7 +35,7 @@ const Demo: React.FC = () => {
   ]);
   const [chatInput, setChatInput] = useState('');
 
-  const demoSteps: DemoStep[] = [
+  const [demoSteps, setDemoSteps] = useState<DemoStep[]>([
     {
       id: 'onboarding',
       title: 'Onboarding & Assessment',
@@ -66,24 +66,51 @@ const Demo: React.FC = () => {
       description: 'Recruiter finds Karthik through the talent marketplace',
       component: null
     }
-  ];
+  ]);
 
-  // Update components when state changes
   useEffect(() => {
-    demoSteps[0].component = <OnboardingStep userProfile={userProfile} quizAnswers={quizAnswers} setQuizAnswers={setQuizAnswers} />;
-    demoSteps[1].component = <AnalysisStep userProfile={userProfile} />;
-    demoSteps[2].component = <SupportStep 
-      userProfile={userProfile} 
-      setUserProfile={setUserProfile}
-      chatMessages={chatMessages}
-      setChatMessages={setChatMessages}
-      chatInput={chatInput}
-      setChatInput={setChatInput}
-      isTyping={isTyping}
-      setIsTyping={setIsTyping}
-    />;
-    demoSteps[3].component = <ImpactStep userProfile={userProfile} setUserProfile={setUserProfile} />;
-    demoSteps[4].component = <HiringStep userProfile={userProfile} />;
+    const updatedSteps = [
+      {
+        id: 'onboarding',
+        title: 'Onboarding & Assessment',
+        description: 'Karthik logs in and takes a diagnostic quiz for Cloud DevOps Engineer',
+        component: <OnboardingStep userProfile={userProfile} quizAnswers={quizAnswers} setQuizAnswers={setQuizAnswers} />
+      },
+      {
+        id: 'analysis',
+        title: 'Analysis & Recommendation',
+        description: 'Personalized dashboard shows strengths, weaknesses, and learning path',
+        component: <AnalysisStep userProfile={userProfile} />
+      },
+      {
+        id: 'support',
+        title: 'Support & Verification',
+        description: 'Karthik interacts with Thozhan AI and completes learning modules',
+        component: <SupportStep 
+          userProfile={userProfile} 
+          setUserProfile={setUserProfile}
+          chatMessages={chatMessages}
+          setChatMessages={setChatMessages}
+          chatInput={chatInput}
+          setChatInput={setChatInput}
+          isTyping={isTyping}
+          setIsTyping={setIsTyping}
+        />
+      },
+      {
+        id: 'impact',
+        title: 'Impact & Validation',
+        description: 'Earning Impact Badge by helping local NGO with Docker container',
+        component: <ImpactStep userProfile={userProfile} setUserProfile={setUserProfile} />
+      },
+      {
+        id: 'hiring',
+        title: 'Corporate Hiring',
+        description: 'Recruiter finds Karthik through the talent marketplace',
+        component: <HiringStep userProfile={userProfile} />
+      }
+    ];
+    setDemoSteps(updatedSteps);
   }, [userProfile, quizAnswers, chatMessages, chatInput, isTyping]);
 
   const nextStep = () => {
@@ -312,6 +339,18 @@ const OnboardingStep: React.FC<{
     }
   };
 
+  const resetQuiz = () => {
+    setCurrentQuestion(0);
+    setShowResults(false);
+  };
+
+  useEffect(() => {
+    // Reset quiz when component mounts or when starting fresh
+    if (quizAnswers.length === 0) {
+      resetQuiz();
+    }
+  }, []);
+  
   if (showResults) {
     return (
       <div className="text-center">
@@ -559,7 +598,7 @@ const SupportStep: React.FC<{
       console.error('Error getting bot response:', error);
       setChatMessages([
         ...updatedMessages,
-        { type: 'bot', message: 'Sorry, I\'m having trouble connecting right now. But I\'m here to help with your Docker and DevOps questions! Try asking again in a moment.', timestamp: new Date() }
+        { type: 'bot', message: 'I\'m here to help with Docker concepts! Try asking: "What is Docker?" or "How do containers work?"', timestamp: new Date() }
       ]);
     } finally {
       setIsTyping(false);
@@ -683,7 +722,7 @@ const SupportStep: React.FC<{
                 />
                 <button
                   onClick={handleSendMessage}
-                  className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[60px]"
                   disabled={isTyping || !chatInput.trim()}
                 >
                   {isTyping ? '...' : 'Send'}
@@ -725,6 +764,14 @@ const ImpactStep: React.FC<{
     });
   };
 
+  useEffect(() => {
+    // Reset project state when component mounts
+    if (!userProfile.impactBadge) {
+      setShowProject(false);
+      setProjectCompleted(false);
+    }
+  }, [userProfile.impactBadge]);
+  
   return (
     <div>
       <div className="text-center mb-8">
@@ -832,6 +879,12 @@ const HiringStep: React.FC<{ userProfile: any }> = ({ userProfile }) => {
     location: 'Chennai'
   });
 
+  const [searchResults, setSearchResults] = useState(false);
+
+  const handleSearch = () => {
+    setSearchResults(true);
+  };
+
   return (
     <div>
       <div className="text-center mb-8">
@@ -891,7 +944,10 @@ const HiringStep: React.FC<{ userProfile: any }> = ({ userProfile }) => {
                 <label htmlFor="impact" className="text-gray-300 text-sm">Has Impact Badge</label>
               </div>
               
-              <button className="w-full py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold rounded-lg">
+              <button 
+                onClick={handleSearch}
+                className="w-full py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-lg transition-all duration-300"
+              >
                 Search Candidates
               </button>
             </div>
@@ -903,83 +959,94 @@ const HiringStep: React.FC<{ userProfile: any }> = ({ userProfile }) => {
           <div className="bg-gray-800/50 rounded-xl p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-white">Search Results</h3>
-              <span className="text-gray-400 text-sm">1 verified candidate found</span>
+              <span className="text-gray-400 text-sm">
+                {searchResults ? '1 verified candidate found' : 'Click search to find candidates'}
+              </span>
             </div>
             
-            {/* Karthik's Profile Card */}
-            <div className="bg-gradient-to-br from-gray-700/50 to-gray-800/50 border border-orange-500/30 rounded-xl p-6 hover:scale-105 transition-all duration-300">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-gradient-to-r from-orange-600 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
-                    K
+            {searchResults ? (
+              /* Karthik's Profile Card */
+              <div className="bg-gradient-to-br from-gray-700/50 to-gray-800/50 border border-orange-500/30 rounded-xl p-6 hover:scale-105 transition-all duration-300">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 bg-gradient-to-r from-orange-600 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                      K
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-semibold text-white">{userProfile.name}</h4>
+                      <p className="text-gray-400">{userProfile.location}</p>
+                      <p className="text-orange-400 font-medium">{userProfile.aspiration}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-xl font-semibold text-white">{userProfile.name}</h4>
-                    <p className="text-gray-400">{userProfile.location}</p>
-                    <p className="text-orange-400 font-medium">{userProfile.aspiration}</p>
+                  
+                  {userProfile.impactBadge && (
+                    <div className="flex items-center space-x-2 bg-purple-500/20 border border-purple-500/30 rounded-lg px-3 py-1">
+                      <Award className="w-4 h-4 text-purple-400" />
+                      <span className="text-purple-400 text-sm font-medium">Impact Badge</span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="mb-4">
+                  <h5 className="text-gray-300 font-medium mb-2">Verified Skills:</h5>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(userProfile.skills)
+                      .filter(([_, level]) => level >= 70)
+                      .map(([skill, level]) => (
+                        <span key={skill} className="px-3 py-1 bg-green-500/20 text-green-400 text-sm rounded-full border border-green-500/30">
+                          {skill} ({level}%)
+                        </span>
+                      ))}
                   </div>
                 </div>
                 
                 {userProfile.impactBadge && (
-                  <div className="flex items-center space-x-2 bg-purple-500/20 border border-purple-500/30 rounded-lg px-3 py-1">
-                    <Award className="w-4 h-4 text-purple-400" />
-                    <span className="text-purple-400 text-sm font-medium">Impact Badge</span>
+                  <div className="mb-4 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                    <h5 className="text-purple-400 font-medium mb-1">Community Impact Project:</h5>
+                    <p className="text-gray-300 text-sm">
+                      Helped {userProfile.impactBadge.ngo} with {userProfile.impactBadge.project}
+                    </p>
                   </div>
                 )}
-              </div>
-              
-              <div className="mb-4">
-                <h5 className="text-gray-300 font-medium mb-2">Verified Skills:</h5>
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(userProfile.skills)
-                    .filter(([_, level]) => level >= 70)
-                    .map(([skill, level]) => (
-                      <span key={skill} className="px-3 py-1 bg-green-500/20 text-green-400 text-sm rounded-full border border-green-500/30">
-                        {skill} ({level}%)
-                      </span>
-                    ))}
+                
+                <div className="flex space-x-3">
+                  <button className="flex-1 py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-lg transition-all duration-300">
+                    View Full Portfolio
+                  </button>
+                  <button className="px-6 py-2 border border-green-500 text-green-400 hover:bg-green-500/10 font-semibold rounded-lg transition-all duration-300">
+                    Invite to Interview
+                  </button>
                 </div>
               </div>
-              
-              {userProfile.impactBadge && (
-                <div className="mb-4 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-                  <h5 className="text-purple-400 font-medium mb-1">Community Impact Project:</h5>
-                  <p className="text-gray-300 text-sm">
-                    Helped {userProfile.impactBadge.ngo} with {userProfile.impactBadge.project}
-                  </p>
-                </div>
-              )}
-              
-              <div className="flex space-x-3">
-                <button className="flex-1 py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-lg transition-all duration-300">
-                  View Full Portfolio
-                </button>
-                <button className="px-6 py-2 border border-green-500 text-green-400 hover:bg-green-500/10 font-semibold rounded-lg transition-all duration-300">
-                  Invite to Interview
-                </button>
+            ) : (
+              <div className="text-center py-12">
+                <Search className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+                <p className="text-gray-400">Use the search filters to find verified candidates</p>
               </div>
-            </div>
+            )}
             
-            <div className="mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-              <div className="flex items-center space-x-3 mb-2">
-                <TrendingUp className="w-5 h-5 text-green-400" />
-                <h4 className="text-green-400 font-semibold">Hiring Metrics</h4>
+            {searchResults && (
+              <div className="mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                <div className="flex items-center space-x-3 mb-2">
+                  <TrendingUp className="w-5 h-5 text-green-400" />
+                  <h4 className="text-green-400 font-semibold">Hiring Metrics</h4>
+                </div>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-green-400">45%</div>
+                    <div className="text-gray-400 text-sm">Time-to-hire saved</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-green-400">92%</div>
+                    <div className="text-gray-400 text-sm">Skill match accuracy</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-green-400">73%</div>
+                    <div className="text-gray-400 text-sm">Diversity improvement</div>
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-green-400">45%</div>
-                  <div className="text-gray-400 text-sm">Time-to-hire saved</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-green-400">92%</div>
-                  <div className="text-gray-400 text-sm">Skill match accuracy</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-green-400">73%</div>
-                  <div className="text-gray-400 text-sm">Diversity improvement</div>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
