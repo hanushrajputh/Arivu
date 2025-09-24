@@ -12,7 +12,7 @@
 
 ## 🚀 Live Demo
 
-**🌐 Platform URL:** [https://project-arivu-social-0tdg.bolt.host](https://project-arivu-social-0tdg.bolt.host)
+**🌐 Platform URL:** [https://arivu-tan.vercel.app/](https://arivu-tan.vercel.app/)
 
 ### Quick Navigation
 - **🏠 Home:** Complete platform overview and impact metrics
