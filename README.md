@@ -1,6 +1,5 @@
 # Project Arivu (அறிவு) - Social Enterprise Talent Platform
 
-![Project Arivu Banner](https://via.placeholder.com/1200x400/1f2937/ffffff?text=Project+Arivu+%E2%80%A2+Social+Enterprise+Talent+Platform)
 
 ## 🌟 Overview
 
